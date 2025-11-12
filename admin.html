@@ -3,99 +3,98 @@
 <head>
   <meta charset="UTF-8">
   <title>🧠 BrainRot Admin Panel</title>
-
-  <!-- Firebase -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { 
-      getAuth, 
-      signInWithEmailAndPassword, 
-      onAuthStateChanged, 
-      signOut 
-    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import { 
-      getFirestore, 
-      collection, 
-      addDoc 
-    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    window.onload = () => {
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+      import { 
+        getAuth, 
+        signInWithEmailAndPassword, 
+        onAuthStateChanged, 
+        signOut 
+      } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+      import { 
+        getFirestore, 
+        collection, 
+        addDoc 
+      } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyC1kLr0wdCM1HDWj8x7LvMV2Q0K6kzycUY",
-      authDomain: "brainrottradingseite.firebaseapp.com",
-      projectId: "brainrottradingseite",
-      storageBucket: "brainrottradingseite.firebasestorage.app",
-      messagingSenderId: "212738351089",
-      appId: "1:212738351089:web:9ae5b737cf550554d16e50",
-      measurementId: "G-BNZ0Y47M0K"
-    };
+      const firebaseConfig = {
+        apiKey: "AIzaSyC1kLr0wdCM1HDWj8x7LvMV2Q0K6kzycUY",
+        authDomain: "brainrottradingseite.firebaseapp.com",
+        projectId: "brainrottradingseite",
+        storageBucket: "brainrottradingseite.firebasestorage.app",
+        messagingSenderId: "212738351089",
+        appId: "1:212738351089:web:9ae5b737cf550554d16e50",
+        measurementId: "G-BNZ0Y47M0K"
+      };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
 
-    // ✅ Deine Admin-Mail
-    const adminEmail = "Bobstarschwarz@gmx.de";
+      const adminEmail = "Bobstarschwarz@gmx.de";
 
-    const loginBox = document.getElementById("loginBox");
-    const adminBox = document.getElementById("adminBox");
-    const msg = document.getElementById("msg");
+      const loginBox = document.getElementById("loginBox");
+      const adminBox = document.getElementById("adminBox");
+      const msg = document.getElementById("msg");
 
-    window.login = async function() {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      try {
-        await signInWithEmailAndPassword(auth, email, password);
-        msg.textContent = "✅ Erfolgreich eingeloggt!";
-      } catch (error) {
-        msg.textContent = error.message;
-      }
-    };
-
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        if (user.email === adminEmail) {
-          loginBox.style.display = "none";
-          adminBox.style.display = "block";
-        } else {
-          msg.textContent = "🚫 Kein Zugriff! Nur Admin erlaubt!";
-          signOut(auth);
+      window.login = async function() {
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+        try {
+          await signInWithEmailAndPassword(auth, email, password);
+          msg.textContent = "✅ Erfolgreich eingeloggt!";
+        } catch (error) {
+          msg.textContent = error.message;
         }
-      }
-    });
+      };
 
-    window.addBrainrot = async function() {
-      const name = document.getElementById("brainrotName").value.trim();
-      const rarity = document.getElementById("brainrotRarity").value;
-      const income = parseFloat(document.getElementById("brainrotIncome").value);
-      const stock = parseInt(document.getElementById("brainrotStock").value);
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          if (user.email === adminEmail) {
+            loginBox.style.display = "none";
+            adminBox.style.display = "block";
+          } else {
+            msg.textContent = "🚫 Kein Zugriff! Nur Admin erlaubt!";
+            signOut(auth);
+          }
+        }
+      });
 
-      if (!name || isNaN(income) || isNaN(stock)) {
-        alert("⚠️ Bitte alle Felder korrekt ausfüllen!");
-        return;
-      }
+      window.addBrainrot = async function() {
+        const name = document.getElementById("brainrotName").value.trim();
+        const rarity = document.getElementById("brainrotRarity").value;
+        const income = parseFloat(document.getElementById("brainrotIncome").value);
+        const stock = parseInt(document.getElementById("brainrotStock").value);
 
-      try {
-        await addDoc(collection(db, "brainrots"), {
-          name: name,
-          rarity: rarity,
-          incomePerSecond: income,
-          stock: stock
-        });
-        alert("✅ Brainrot hinzugefügt!");
-        document.getElementById("brainrotName").value = "";
-        document.getElementById("brainrotRarity").value = "Selten";
-        document.getElementById("brainrotIncome").value = "";
-        document.getElementById("brainrotStock").value = "";
-      } catch (error) {
-        alert("❌ Fehler: " + error.message);
-      }
-    };
+        if (!name || isNaN(income) || isNaN(stock)) {
+          alert("⚠️ Bitte alle Felder korrekt ausfüllen!");
+          return;
+        }
 
-    window.logout = function() {
-      signOut(auth);
-      adminBox.style.display = "none";
-      loginBox.style.display = "block";
-      msg.textContent = "👋 Abgemeldet!";
+        try {
+          await addDoc(collection(db, "brainrots"), {
+            name: name,
+            rarity: rarity,
+            incomePerSecond: income,
+            stock: stock
+          });
+          alert("✅ Brainrot hinzugefügt!");
+          document.getElementById("brainrotName").value = "";
+          document.getElementById("brainrotRarity").value = "Selten";
+          document.getElementById("brainrotIncome").value = "";
+          document.getElementById("brainrotStock").value = "";
+        } catch (error) {
+          alert("❌ Fehler: " + error.message);
+        }
+      };
+
+      window.logout = function() {
+        signOut(auth);
+        adminBox.style.display = "none";
+        loginBox.style.display = "block";
+        msg.textContent = "👋 Abgemeldet!";
+      };
     };
   </script>
 
