@@ -3,9 +3,82 @@
 <head>
   <meta charset="UTF-8">
   <title>BrainRot Login & Liste</title>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
+
+  <!-- Firebase v9 modular -->
+  <script type="module">
+    // ==== Firebase Import ====
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+    // ==== Firebase Config ====
+    const firebaseConfig = {
+      apiKey: "AIzaSyC1kLr0wdCM1HDWj8x7LvMV2Q0K6kzycUY",
+      authDomain: "brainrottradingseite.firebaseapp.com",
+      projectId: "brainrottradingseite",
+      storageBucket: "brainrottradingseite.firebasestorage.app",
+      messagingSenderId: "212738351089",
+      appId: "1:212738351089:web:9ae5b737cf550554d16e50",
+      measurementId: "G-BNZ0Y47M0K"
+    };
+
+    // ==== Firebase starten ====
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // ==== Funktionen ====
+    async function register() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      try {
+        await createUserWithEmailAndPassword(auth, email, password);
+        showAlert("✅ Erfolgreich registriert!");
+      } catch (error) {
+        showAlert(error.message);
+      }
+    }
+
+    async function login() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        showAlert("🎉 Erfolgreich eingeloggt!");
+        loadList();
+      } catch (error) {
+        showAlert(error.message);
+      }
+    }
+
+    async function loadList() {
+      const list = document.getElementById("itemList");
+      list.innerHTML = "";
+      const querySnapshot = await getDocs(collection(db, "items"));
+      if (querySnapshot.empty) {
+        list.innerHTML = "<li>Keine Items vorhanden 🦎</li>";
+      } else {
+        querySnapshot.forEach((doc) => {
+          const li = document.createElement("li");
+          li.textContent = "🧩 " + doc.data().name;
+          list.appendChild(li);
+        });
+      }
+    }
+
+    // ==== Alert anzeigen ====
+    function showAlert(msg) {
+      const alertBox = document.getElementById("alert");
+      alertBox.textContent = msg;
+      setTimeout(() => { alertBox.textContent = ""; }, 3000);
+    }
+
+    // ==== Buttons verbinden ====
+    window.register = register;
+    window.login = login;
+  </script>
+
+  <!-- ==== Style ==== -->
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;900&display=swap');
 
@@ -30,31 +103,31 @@
     }
 
     h2 {
-      margin-bottom: 50px;
-      font-size: 3.2em;
+      margin-bottom: 40px;
+      font-size: 3em;
       color: #fff;
       text-shadow: 0 0 10px rgba(255,255,255,0.5);
     }
 
     input {
       width: 90%;
-      padding: 28px;
-      margin: 20px 0;
-      border-radius: 18px;
+      padding: 25px;
+      margin: 15px 0;
+      border-radius: 15px;
       border: none;
       outline: none;
-      font-size: 1.8em;
+      font-size: 1.6em;
       text-align: center;
     }
 
     button {
-      padding: 28px 45px;
+      padding: 25px 40px;
       margin: 20px 15px;
       border: none;
-      border-radius: 18px;
+      border-radius: 15px;
       cursor: pointer;
       font-weight: 900;
-      font-size: 2em;
+      font-size: 1.8em;
       background: #ff6a00;
       color: #fff;
       box-shadow: 0 6px 20px rgba(0,0,0,0.3);
@@ -69,15 +142,15 @@
     ul {
       list-style: none;
       padding: 0;
-      margin-top: 50px;
-      font-size: 1.9em;
+      margin-top: 40px;
+      font-size: 1.7em;
     }
 
     li {
       background: rgba(255, 255, 255, 0.15);
-      padding: 22px 28px;
-      margin-bottom: 20px;
-      border-radius: 15px;
+      padding: 20px 25px;
+      margin-bottom: 15px;
+      border-radius: 12px;
       transition: 0.2s;
     }
 
@@ -90,11 +163,12 @@
       margin-top: 25px;
       color: #ffcccb;
       font-weight: 900;
-      font-size: 1.6em;
+      font-size: 1.4em;
       text-shadow: 0 0 6px rgba(255,0,0,0.4);
     }
   </style>
 </head>
+
 <body>
   <div class="container">
     <h2>🧠 BrainRot Login 🦎</h2>
@@ -106,70 +180,8 @@
       <button onclick="login()">Login</button>
     </div>
 
-    <ul id="itemList">
-      <!-- Items werden hier angezeigt -->
-    </ul>
+    <ul id="itemList"></ul>
     <div id="alert" class="alert"></div>
   </div>
-
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyC1kLr0wdCM1HDWj8x7LvMV2Q0K6kzycUY",
-      authDomain: "brainrottradingseite.firebaseapp.com",
-      projectId: "brainrottradingseite",
-      storageBucket: "brainrottradingseite.firebasestorage.app",
-      messagingSenderId: "212738351089",
-      appId: "1:212738351089:web:9ae5b737cf550554d16e50",
-      measurementId: "G-BNZ0Y47M0K"
-    };
-
-    const app = firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-
-    const alertBox = document.getElementById('alert');
-
-    function showAlert(msg) {
-      alertBox.textContent = msg;
-      setTimeout(() => { alertBox.textContent = ''; }, 3000);
-    }
-
-    function register() {
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      auth.createUserWithEmailAndPassword(email, password)
-        .then(() => showAlert("✅ Erfolgreich registriert!"))
-        .catch(error => showAlert(error.message));
-    }
-
-    function login() {
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      auth.signInWithEmailAndPassword(email, password)
-        .then(() => {
-          showAlert("🎉 Erfolgreich eingeloggt!");
-          loadList();
-        })
-        .catch(error => showAlert(error.message));
-    }
-
-    function loadList() {
-      const list = document.getElementById('itemList');
-      list.innerHTML = "";
-
-      db.collection("items").get()
-        .then(snapshot => {
-          if(snapshot.empty) {
-            list.innerHTML = "<li>Keine Items vorhanden 🦎</li>";
-          } else {
-            snapshot.forEach(doc => {
-              const li = document.createElement('li');
-              li.textContent = "🧩 " + doc.data().name;
-              list.appendChild(li);
-            });
-          }
-        });
-    }
-  </script>
 </body>
 </html>
