@@ -4,12 +4,48 @@
 <meta charset="UTF-8">
 <title>🧠 BrainRot Admin Panel</title>
 <style>
-  body { font-family: 'Roboto', sans-serif; background: linear-gradient(135deg, #ff512f, #dd2476); color: #fff; display:flex; justify-content:center; align-items:center; height:100vh; margin:0; }
-  .container { background: rgba(0,0,0,0.8); padding:60px; border-radius:25px; text-align:center; box-shadow:0 20px 40px rgba(0,0,0,0.6); width:700px; }
-  h1 { font-size:3em; text-shadow:0 0 10px rgba(255,255,255,0.4); }
-  input, select { width:90%; padding:20px; margin:10px 0; border-radius:15px; border:none; outline:none; font-size:1.4em; text-align:center; }
-  select { background-color:#222; color:#fff; cursor:pointer; }
-  button { padding:20px 35px; margin:15px 10px; border:none; border-radius:15px; cursor:pointer; font-weight:900; font-size:1.4em; background:#ff6a00; color:#fff; box-shadow:0 6px 20px rgba(0,0,0,0.3); transition:0.3s; }
+  body {
+    font-family: 'Roboto', sans-serif;
+    background: linear-gradient(135deg, #ff512f, #dd2476);
+    color: #fff;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+    margin:0;
+  }
+  .container {
+    background: rgba(0,0,0,0.85);
+    padding:60px;
+    border-radius:25px;
+    text-align:center;
+    width:700px;
+    box-shadow:0 20px 40px rgba(0,0,0,0.6);
+  }
+  h1 { font-size:3em; margin-bottom:30px; text-shadow:0 0 10px rgba(255,255,255,0.4); }
+  input, select {
+    width:90%;
+    padding:20px;
+    margin:10px 0;
+    border-radius:15px;
+    border:none;
+    font-size:1.4em;
+    text-align:center;
+  }
+  select { background:#222; color:#fff; cursor:pointer; }
+  button {
+    padding:20px 35px;
+    margin:15px 10px;
+    border:none;
+    border-radius:15px;
+    cursor:pointer;
+    font-weight:900;
+    font-size:1.4em;
+    background:#ff6a00;
+    color:#fff;
+    box-shadow:0 6px 20px rgba(0,0,0,0.3);
+    transition:0.3s;
+  }
   button:hover { transform:scale(1.05); background:#ff9100; }
   #msg { margin-top:20px; font-size:1.3em; color:#ffcccc; }
   #adminBox { display:none; }
@@ -20,6 +56,7 @@
 <div class="container">
 <h1>🧠 BrainRot Admin 🦎</h1>
 
+<!-- Login -->
 <div id="loginBox">
   <input type="email" id="email" placeholder="Admin E-Mail">
   <input type="password" id="password" placeholder="Passwort">
@@ -27,6 +64,7 @@
   <p id="msg"></p>
 </div>
 
+<!-- Admin Panel -->
 <div id="adminBox">
   <h2>Neuen Brainrot hinzufügen</h2>
   <label>Name:</label>
@@ -47,15 +85,17 @@
   <input type="number" id="brainrotStock" placeholder="z.B. 100">
   <button id="addBtn">Hinzufügen</button>
   <button id="logoutBtn">Logout</button>
+  <p id="adminMsg"></p>
 </div>
 </div>
 
-<!-- Firebase & Admin Script -->
+<!-- Firebase & Script -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
+// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyC1kLr0wdCM1HDWj8x7LvMV2Q0K6kzycUY",
   authDomain: "brainrottradingseite.firebaseapp.com",
@@ -70,27 +110,32 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-const adminEmail = "bobstarschwarz@gmx.de";
+// Admin E-Mail
+const adminEmail = "Bobstarschwarz@gmx.de";
 
 const loginBox = document.getElementById("loginBox");
 const adminBox = document.getElementById("adminBox");
 const msg = document.getElementById("msg");
+const adminMsg = document.getElementById("adminMsg");
 
+// Login
 document.getElementById("loginBtn").addEventListener("click", async () => {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
   try {
     await signInWithEmailAndPassword(auth, email, password);
     msg.textContent = "✅ Erfolgreich angemeldet";
-  } catch (err) { msg.textContent = err.message; }
+  } catch (err) { msg.textContent = err.message; console.error(err); }
 });
 
+// Prüfen ob Admin
 onAuthStateChanged(auth, (user) => {
-  if (user && user.email === adminEmail) {
+  console.log("User:", user); // Debug
+  if(user && user.email.toLowerCase().trim() === adminEmail.toLowerCase().trim()){
     loginBox.style.display = "none";
     adminBox.style.display = "block";
     msg.textContent = "";
-  } else if (user) {
+  } else if(user){
     msg.textContent = "🚫 Kein Zugriff! Nur Admin erlaubt!";
     signOut(auth);
   } else {
@@ -99,22 +144,39 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
+// Brainrot hinzufügen
 document.getElementById("addBtn").addEventListener("click", async () => {
   const name = document.getElementById("brainrotName").value.trim();
   const rarity = document.getElementById("brainrotRarity").value;
   const income = parseFloat(document.getElementById("brainrotIncome").value);
   const stock = parseInt(document.getElementById("brainrotStock").value);
-  if (!name || isNaN(income) || isNaN(stock)) return alert("⚠️ Alle Felder korrekt ausfüllen!");
-  try {
-    await addDoc(collection(db, "brainrots"), { name, rarity, incomePerSecond: income, stock });
+
+  console.log({name, rarity, income, stock}); // Debug
+
+  if(!name || isNaN(income) || isNaN(stock)){
+    return alert("⚠️ Alle Felder korrekt ausfüllen!");
+  }
+
+  try{
+    const docRef = await addDoc(collection(db, "brainrots"), {
+      name,
+      rarity,
+      incomePerSecond: income,
+      stock
+    });
+    console.log("Document written with ID:", docRef.id);
     alert("✅ Brainrot hinzugefügt!");
-    document.getElementById("brainrotName").value = "";
-    document.getElementById("brainrotRarity").value = "Selten";
-    document.getElementById("brainrotIncome").value = "";
-    document.getElementById("brainrotStock").value = "";
-  } catch(err){ alert("❌ Fehler: " + err.message);}
+    document.getElementById("brainrotName").value="";
+    document.getElementById("brainrotRarity").value="Selten";
+    document.getElementById("brainrotIncome").value="";
+    document.getElementById("brainrotStock").value="";
+  } catch(err){
+    console.error("Fehler beim Hinzufügen:", err);
+    alert("❌ Fehler beim Hinzufügen! Schau Konsole.");
+  }
 });
 
+// Logout
 document.getElementById("logoutBtn").addEventListener("click", () => {
   signOut(auth);
   loginBox.style.display = "block";
