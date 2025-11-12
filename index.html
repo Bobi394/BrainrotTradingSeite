@@ -1,187 +1,100 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <title>BrainRot Login & Liste</title>
-
-  <!-- Firebase v9 modular -->
-  <script type="module">
-    // ==== Firebase Import ====
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-
-    // ==== Firebase Config ====
-    const firebaseConfig = {
-      apiKey: "AIzaSyC1kLr0wdCM1HDWj8x7LvMV2Q0K6kzycUY",
-      authDomain: "brainrottradingseite.firebaseapp.com",
-      projectId: "brainrottradingseite",
-      storageBucket: "brainrottradingseite.firebasestorage.app",
-      messagingSenderId: "212738351089",
-      appId: "1:212738351089:web:9ae5b737cf550554d16e50",
-      measurementId: "G-BNZ0Y47M0K"
-    };
-
-    // ==== Firebase starten ====
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    // ==== Funktionen ====
-    async function register() {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      try {
-        await createUserWithEmailAndPassword(auth, email, password);
-        showAlert("✅ Erfolgreich registriert!");
-      } catch (error) {
-        showAlert(error.message);
-      }
-    }
-
-    async function login() {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      try {
-        await signInWithEmailAndPassword(auth, email, password);
-        showAlert("🎉 Erfolgreich eingeloggt!");
-        loadList();
-      } catch (error) {
-        showAlert(error.message);
-      }
-    }
-
-    async function loadList() {
-      const list = document.getElementById("itemList");
-      list.innerHTML = "";
-      const querySnapshot = await getDocs(collection(db, "items"));
-      if (querySnapshot.empty) {
-        list.innerHTML = "<li>Keine Items vorhanden 🦎</li>";
-      } else {
-        querySnapshot.forEach((doc) => {
-          const li = document.createElement("li");
-          li.textContent = "🧩 " + doc.data().name;
-          list.appendChild(li);
-        });
-      }
-    }
-
-    // ==== Alert anzeigen ====
-    function showAlert(msg) {
-      const alertBox = document.getElementById("alert");
-      alertBox.textContent = msg;
-      setTimeout(() => { alertBox.textContent = ""; }, 3000);
-    }
-
-    // ==== Buttons verbinden ====
-    window.register = register;
-    window.login = login;
-  </script>
-
-  <!-- ==== Style ==== -->
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;900&display=swap');
-
-    body {
-      font-family: 'Roboto', sans-serif;
-      background: linear-gradient(135deg, #6a11cb, #2575fc);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      margin: 0;
-      color: #fff;
-    }
-
-    .container {
-      background: rgba(0, 0, 0, 0.8);
-      padding: 60px;
-      border-radius: 30px;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-      width: 600px;
-      text-align: center;
-    }
-
-    h2 {
-      margin-bottom: 40px;
-      font-size: 3em;
-      color: #fff;
-      text-shadow: 0 0 10px rgba(255,255,255,0.5);
-    }
-
-    input {
-      width: 90%;
-      padding: 25px;
-      margin: 15px 0;
-      border-radius: 15px;
-      border: none;
-      outline: none;
-      font-size: 1.6em;
-      text-align: center;
-    }
-
-    button {
-      padding: 25px 40px;
-      margin: 20px 15px;
-      border: none;
-      border-radius: 15px;
-      cursor: pointer;
-      font-weight: 900;
-      font-size: 1.8em;
-      background: #ff6a00;
-      color: #fff;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-      transition: 0.3s;
-    }
-
-    button:hover {
-      transform: scale(1.05);
-      background: #ff9100;
-    }
-
-    ul {
-      list-style: none;
-      padding: 0;
-      margin-top: 40px;
-      font-size: 1.7em;
-    }
-
-    li {
-      background: rgba(255, 255, 255, 0.15);
-      padding: 20px 25px;
-      margin-bottom: 15px;
-      border-radius: 12px;
-      transition: 0.2s;
-    }
-
-    li:hover {
-      background: rgba(255, 255, 255, 0.3);
-      transform: scale(1.02);
-    }
-
-    .alert {
-      margin-top: 25px;
-      color: #ffcccb;
-      font-weight: 900;
-      font-size: 1.4em;
-      text-shadow: 0 0 6px rgba(255,0,0,0.4);
-    }
-  </style>
+<meta charset="UTF-8">
+<title>🧠 BrainRot Shop</title>
+<style>
+  body {
+    font-family: 'Roboto', sans-serif;
+    background: linear-gradient(135deg, #36d1dc, #5b86e5);
+    color: #fff;
+    margin:0;
+    padding:0;
+  }
+  .container {
+    width: 90%;
+    max-width: 1000px;
+    margin: 50px auto;
+    text-align: center;
+  }
+  h1 {
+    font-size: 3em;
+    margin-bottom: 30px;
+    text-shadow: 0 0 10px rgba(0,0,0,0.5);
+  }
+  .brainrot-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+  }
+  .brainrot-card {
+    background: rgba(0,0,0,0.6);
+    border-radius: 20px;
+    padding: 20px;
+    width: 220px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+    transition: transform 0.2s;
+  }
+  .brainrot-card:hover {
+    transform: scale(1.05);
+  }
+  .brainrot-card h3 {
+    font-size: 1.5em;
+    margin: 10px 0;
+  }
+  .brainrot-card p {
+    margin: 5px 0;
+    font-size: 1.1em;
+  }
+</style>
 </head>
-
 <body>
-  <div class="container">
-    <h2>🧠 BrainRot Login 🦎</h2>
-
-    <input type="email" id="email" placeholder="Email eingeben">
-    <input type="password" id="password" placeholder="Passwort eingeben">
-    <div>
-      <button onclick="register()">Registrieren</button>
-      <button onclick="login()">Login</button>
-    </div>
-
-    <ul id="itemList"></ul>
-    <div id="alert" class="alert"></div>
+<div class="container">
+  <h1>🧠 BrainRot Shop</h1>
+  <div class="brainrot-list" id="brainrotList">
+    <!-- Brainrots werden hier angezeigt -->
   </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyC1kLr0wdCM1HDWj8x7LvMV2Q0K6kzycUY",
+  authDomain: "brainrottradingseite.firebaseapp.com",
+  projectId: "brainrottradingseite",
+  storageBucket: "brainrottradingseite.firebasestorage.app",
+  messagingSenderId: "212738351089",
+  appId: "1:212738351089:web:9ae5b737cf550554d16e50",
+  measurementId: "G-BNZ0Y47M0K"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const listContainer = document.getElementById("brainrotList");
+
+async function loadBrainrots() {
+  const snapshot = await getDocs(collection(db, "brainrots"));
+  listContainer.innerHTML = ""; // vorher leeren
+  snapshot.forEach(doc => {
+    const data = doc.data();
+    const card = document.createElement("div");
+    card.className = "brainrot-card";
+    card.innerHTML = `
+      <h3>${data.name}</h3>
+      <p>Seltenheit: ${data.rarity}</p>
+      <p>Geld/s: ${data.incomePerSecond}</p>
+      <p>Lager: ${data.stock}</p>
+    `;
+    listContainer.appendChild(card);
+  });
+}
+
+// Laden direkt beim Start
+loadBrainrots();
+</script>
 </body>
 </html>
