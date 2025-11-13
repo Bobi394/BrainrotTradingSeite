@@ -2,43 +2,108 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>🧠 BrainRot Admin</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🧠 BrainRot Admin Login</title>
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600&family=Poppins:wght@400;600&display=swap');
+
   body {
     font-family: 'Poppins', sans-serif;
-    background: linear-gradient(135deg, #141E30, #243B55);
-    color: white;
-    text-align: center;
+    background: radial-gradient(circle at top left, #000428, #004e92);
+    color: #fff;
     margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+  }
+
+  h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 3em;
+    margin-top: 40px;
+    text-shadow: 0 0 20px #00c6ff, 0 0 40px #0072ff;
+  }
+
+  .box {
+    background: rgba(255, 255, 255, 0.1);
     padding: 40px;
-  }
-  .admin-box {
-    background: rgba(255,255,255,0.1);
-    padding: 30px;
     border-radius: 20px;
-    display: inline-block;
-    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    margin-top: 40px;
+    box-shadow: 0 0 40px rgba(0, 198, 255, 0.3);
+    backdrop-filter: blur(10px);
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
   }
-  input, select, button {
-    margin: 10px;
+
+  input, select {
+    width: 80%;
     padding: 12px;
-    font-size: 18px;
+    margin: 10px 0;
+    border-radius: 10px;
     border: none;
-    border-radius: 8px;
+    outline: none;
+    font-size: 1.1em;
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    text-align: center;
   }
+
+  input:focus {
+    background: rgba(255, 255, 255, 0.25);
+  }
+
+  select option {
+    color: black;
+  }
+
   button {
-    background: #4CAF50;
+    margin-top: 15px;
+    padding: 12px 25px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(90deg, #00c6ff, #0072ff);
     color: white;
+    font-size: 1.1em;
     cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
   }
+
   button:hover {
-    background: #45a049;
+    transform: scale(1.05);
+    box-shadow: 0 0 20px #00c6ff;
+  }
+
+  #status {
+    margin-top: 15px;
+    font-size: 1.1em;
+    color: #0ff;
+    text-shadow: 0 0 10px #0ff;
+  }
+
+  #adminPanel {
+    display: none;
   }
 </style>
 </head>
 <body>
   <h1>🧠 BrainRot Admin</h1>
-  <div class="admin-box">
+
+  <!-- LOGIN -->
+  <div class="box" id="loginBox">
+    <h2>🔐 Admin Login</h2>
+    <input type="email" id="email" placeholder="E-Mail"><br>
+    <input type="password" id="password" placeholder="Passwort"><br>
+    <button id="loginBtn">Anmelden</button>
+    <p id="status"></p>
+  </div>
+
+  <!-- ADMIN PANEL -->
+  <div class="box" id="adminPanel">
+    <h2>📦 Brainrot hinzufügen</h2>
     <input type="text" id="brainrotName" placeholder="Name des Brainrots"><br>
     <select id="brainrotRarity">
       <option>Selten</option>
@@ -49,16 +114,16 @@
       <option>Secret</option>
       <option>OG</option>
     </select><br>
-    <input type="number" id="brainrotIncome" placeholder="Geld pro Sekunde"><br>
-    <input type="number" id="brainrotStock" placeholder="Auf Lager"><br>
+    <input type="number" id="brainrotIncome" placeholder="💰 Geld pro Sekunde"><br>
+    <input type="number" id="brainrotStock" placeholder="📦 Auf Lager"><br>
     <button id="addBtn">➕ Brainrot hinzufügen</button>
-    <p id="status"></p>
+    <p id="addStatus"></p>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
     import { getDatabase, ref, push, set } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
-    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyC1kLr0wdCM1HDWj8x7LvMV2Q0K6kzycUY",
@@ -72,21 +137,44 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
     const auth = getAuth(app);
+    const db = getDatabase(app);
 
-    const addBtn = document.getElementById("addBtn");
+    const loginBox = document.getElementById("loginBox");
+    const adminPanel = document.getElementById("adminPanel");
+    const loginBtn = document.getElementById("loginBtn");
     const status = document.getElementById("status");
 
+    // LOGIN
+    loginBtn.addEventListener("click", () => {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      status.textContent = "⏳ Anmelden läuft...";
+
+      signInWithEmailAndPassword(auth, email, password)
+        .then(() => {
+          status.textContent = "✅ Erfolgreich angemeldet!";
+        })
+        .catch((err) => {
+          status.textContent = "❌ Fehler: " + err.message;
+        });
+    });
+
+    // WENN EINGELOGGT
     onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        const email = prompt("Admin E-Mail:");
-        const password = prompt("Passwort:");
-        signInWithEmailAndPassword(auth, email, password)
-          .then(() => alert("✅ Erfolgreich angemeldet!"))
-          .catch(err => alert("❌ Fehler: " + err.message));
+      if (user) {
+        loginBox.style.display = "none";
+        adminPanel.style.display = "block";
+      } else {
+        loginBox.style.display = "block";
+        adminPanel.style.display = "none";
       }
     });
+
+    // BRAINROT HINZUFÜGEN
+    const addBtn = document.getElementById("addBtn");
+    const addStatus = document.getElementById("addStatus");
 
     addBtn.addEventListener("click", async () => {
       const name = document.getElementById("brainrotName").value.trim();
@@ -95,11 +183,10 @@
       const stock = parseInt(document.getElementById("brainrotStock").value);
 
       if (!name || isNaN(income) || isNaN(stock)) {
-        return alert("⚠️ Bitte alles korrekt ausfüllen!");
+        return alert("⚠️ Bitte alle Felder ausfüllen!");
       }
 
-      status.textContent = "Hinzufügen läuft...";
-
+      addStatus.textContent = "⏳ Hinzufügen läuft...";
       try {
         const newRef = push(ref(db, "brainrots"));
         await set(newRef, {
@@ -108,12 +195,9 @@
           incomePerSecond: income,
           stock
         });
-        status.textContent = "✅ Brainrot erfolgreich hinzugefügt!";
-        document.getElementById("brainrotName").value = "";
-        document.getElementById("brainrotIncome").value = "";
-        document.getElementById("brainrotStock").value = "";
-      } catch (error) {
-        status.textContent = "❌ Fehler: " + error.message;
+        addStatus.textContent = "✅ Brainrot erfolgreich hinzugefügt!";
+      } catch (err) {
+        addStatus.textContent = "❌ Fehler: " + err.message;
       }
     });
   </script>
