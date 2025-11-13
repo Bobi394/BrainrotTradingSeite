@@ -3,131 +3,145 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🧠 BrainRot Shop</title>
+<title>🧠 BrainRot Trading</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600&family=Poppins:wght@400;600&display=swap');
-
-  body {
-    font-family: 'Poppins', sans-serif;
-    background: radial-gradient(circle at top left, #000428, #004e92);
-    color: #fff;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-height: 100vh;
-  }
-
-  h1 {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 3em;
-    margin-top: 40px;
-    text-shadow: 0 0 20px #00c6ff, 0 0 40px #0072ff;
-  }
-
-  .brainrot-container {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    margin: 40px 20px;
-    gap: 25px;
-    width: 90%;
-    max-width: 1200px;
-  }
-
-  .brainrot-card {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 20px;
-    padding: 20px;
-    width: 240px;
-    box-shadow: 0 0 30px rgba(0, 198, 255, 0.2);
-    text-align: center;
-    backdrop-filter: blur(10px);
-    transition: all 0.3s ease;
-  }
-
-  .brainrot-card:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 40px rgba(0, 198, 255, 0.5);
-  }
-
-  .brainrot-card h3 {
-    font-size: 1.6em;
-    margin-bottom: 10px;
-    color: #00c6ff;
-    text-shadow: 0 0 10px #00c6ff;
-  }
-
-  .rarity {
-    font-weight: bold;
-    font-size: 1.1em;
-  }
-
-  .income, .stock {
-    margin-top: 5px;
-    font-size: 1em;
-  }
-
-  footer {
-    margin-top: auto;
-    padding: 20px;
-    font-size: 1em;
-    color: #ccc;
-  }
+  body { font-family:'Poppins', sans-serif; background: radial-gradient(circle at top left, #000428, #004e92); color:white; margin:0; padding:20px; text-align:center;}
+  h1 { font-family:'Orbitron', sans-serif; font-size:3em; margin-top:20px; text-shadow:0 0 20px #00c6ff;}
+  .brainrot-container { display:flex; flex-wrap:wrap; justify-content:center; margin:20px 0; gap:25px; width:90%; max-width:1200px; }
+  .brainrot-card { background: rgba(255,255,255,0.1); border-radius:20px; padding:20px; width:240px; box-shadow:0 0 30px rgba(0,198,255,0.2); text-align:center; backdrop-filter:blur(10px); transition:all 0.3s ease; }
+  .brainrot-card:hover { transform:scale(1.05); box-shadow:0 0 40px rgba(0,198,255,0.5); }
+  button { margin-top:10px; padding:10px 18px; border:none; border-radius:10px; background:linear-gradient(90deg,#00c6ff,#0072ff); color:white; font-size:1em; cursor:pointer; font-weight:600; transition:all 0.3s ease; }
+  button:hover { transform:scale(1.05); box-shadow:0 0 20px #00c6ff; }
+  .chat-box { margin-top:40px; width:90%; max-width:600px; background: rgba(255,255,255,0.1); border-radius:20px; padding:20px; text-align:left; }
+  #messages { max-height:300px; overflow-y:auto; margin-bottom:10px; }
+  .message { padding:5px 10px; border-bottom:1px solid rgba(255,255,255,0.2);}
+  input { padding:10px; border-radius:10px; border:none; width:70%; }
 </style>
 </head>
 <body>
-  <h1>🧠 BrainRot Shop</h1>
-  <div class="brainrot-container" id="brainrotContainer">
-    <p>🔄 Lade Brainrots...</p>
-  </div>
+<h1>🧠 BrainRot Trading</h1>
+<div class="brainrot-container" id="brainrotContainer"><p>🔄 Lade Brainrots...</p></div>
 
-  <footer>© 2025 BrainRot Inc. – powered by Skippy 🦎</footer>
+<div class="chat-box">
+  <h2>💬 Chat</h2>
+  <div id="messages">🔄 Lade Nachrichten...</div>
+  <input type="text" id="msgInput" placeholder="Deine Nachricht">
+  <button id="sendBtn">Senden</button>
+  <p id="chatInfo"></p>
+</div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getDatabase, ref, onValue, push, set } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyC1kLr0wdCM1HDWj8x7LvMV2Q0K6kzycUY",
-      authDomain: "brainrottradingseite.firebaseapp.com",
-      projectId: "brainrottradingseite",
-      storageBucket: "brainrottradingseite.firebasestorage.app",
-      messagingSenderId: "212738351089",
-      appId: "1:212738351089:web:9ae5b737cf550554d16e50",
-      measurementId: "G-BNZ0Y47M0K",
-      databaseURL: "https://brainrottradingseite-default-rtdb.europe-west1.firebasedatabase.app/"
-    };
+const firebaseConfig = {
+  apiKey:"AIzaSyC1kLr0wdCM1HDWj8x7LvMV2Q0K6kzycUY",
+  authDomain:"brainrottradingseite.firebaseapp.com",
+  projectId:"brainrottradingseite",
+  storageBucket:"brainrottradingseite.firebasestorage.app",
+  messagingSenderId:"212738351089",
+  appId:"1:212738351089:web:9ae5b737cf550554d16e50",
+  measurementId:"G-BNZ0Y47M0K",
+  databaseURL:"https://brainrottradingseite-default-rtdb.europe-west1.firebasedatabase.app/"
+};
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    const container = document.getElementById("brainrotContainer");
-
-    // Live Brainrot-Daten anzeigen
-    const brainrotRef = ref(db, "brainrots");
-    onValue(brainrotRef, (snapshot) => {
-      const data = snapshot.val();
-      container.innerHTML = ""; // erst leeren
-
-      if (!data) {
-        container.innerHTML = "<p>😢 Noch keine Brainrots hinzugefügt...</p>";
-        return;
-      }
-
-      Object.keys(data).forEach((key) => {
-        const item = data[key];
-        const card = document.createElement("div");
-        card.className = "brainrot-card";
-        card.innerHTML = `
-          <h3>${item.name}</h3>
-          <p class="rarity">💎 ${item.rarity}</p>
-          <p class="income">💰 ${item.incomePerSecond} / Sekunde</p>
-          <p class="stock">📦 Auf Lager: ${item.stock}</p>
-        `;
-        container.appendChild(card);
-      });
+// Brainrots anzeigen
+const brainrotContainer = document.getElementById("brainrotContainer");
+const brainrotRef = ref(db, "brainrots");
+onValue(brainrotRef, snapshot=>{
+  const data = snapshot.val();
+  brainrotContainer.innerHTML="";
+  if(!data) brainrotContainer.innerHTML="<p>😢 Noch keine Brainrots zum Traden...</p>";
+  else{
+    Object.keys(data).forEach(key=>{
+      const item = data[key];
+      const card = document.createElement("div");
+      card.className="brainrot-card";
+      card.innerHTML=`
+        <h3>${item.name}</h3>
+        <p>💎 ${item.rarity}</p>
+        <p>💰 ${item.incomePerSecond} / Sekunde</p>
+        <p>📦 Auf Lager: ${item.stock}</p>
+        <button onclick="startTrade('${key}','${item.name}','${item.incomePerSecond}')">🔁 Trade anbieten</button>
+      `;
+      brainrotContainer.appendChild(card);
     });
-  </script>
+  }
+});
+
+// UserID generieren
+let userId = localStorage.getItem("userId");
+if(!userId){ userId="user-"+Math.floor(Math.random()*100000); localStorage.setItem("userId",userId); }
+
+function startTrade(id,name,income){
+  const offer = prompt(`Was willst du für "${name}" geben?`);
+  if(!offer) return;
+  const tradeRef = push(ref(db,"trades"));
+  set(tradeRef,{
+    tradeId:id,
+    brainrotName:name,
+    brainrotIncome:income,
+    offer,
+    userId,
+    accepted:false,
+    time:Date.now()
+  });
+  alert("✅ Trade-Angebot gesendet!");
+}
+
+// Chat
+const chatDiv = document.getElementById("messages");
+const msgInput = document.getElementById("msgInput");
+const sendBtn = document.getElementById("sendBtn");
+const chatInfo = document.getElementById("chatInfo");
+
+let chatRef = ref(db,"chats/"+userId);
+chatInfo.textContent="💬 Chat nur aktiv, wenn Admin Anfrage angenommen hat.";
+
+onValue(ref(db,"trades"), snapshot=>{
+  const trades = snapshot.val();
+  let accepted=false;
+  if(trades){
+    Object.values(trades).forEach(t=>{
+      if(t.userId===userId && t.accepted) accepted=true;
+    });
+  }
+  if(accepted){
+    chatRef = ref(db,"chats/"+userId);
+    chatInfo.textContent="💬 Chat aktiv!";
+  }else{
+    chatInfo.textContent="💬 Chat nur aktiv, wenn Admin Anfrage angenommen hat.";
+  }
+});
+
+// Live Nachrichten
+onValue(chatRef, snapshot=>{
+  const data = snapshot.val();
+  chatDiv.innerHTML="";
+  if(!data) chatDiv.innerHTML="💬 Noch keine Nachrichten";
+  else Object.values(data).sort((a,b)=>a.time-b.time).forEach(msg=>{
+    const div=document.createElement("div");
+    div.className="message";
+    div.textContent=`${msg.user}: ${msg.text}`;
+    chatDiv.appendChild(div);
+  });
+  chatDiv.scrollTop=chatDiv.scrollHeight;
+});
+
+// Anti-Spam
+let lastSent=0; const cooldown=5000;
+sendBtn.addEventListener("click", async()=>{
+  const text=msgInput.value.trim();
+  if(!text) return;
+  const now=Date.now();
+  if(now-lastSent<cooldown) return alert("⚠️ Warte ein paar Sekunden bevor du erneut sendest!");
+  lastSent=now;
+  const newRef=push(chatRef);
+  await set(newRef,{user:"User",text,time:now});
+  msgInput.value="";
+});
+</script>
 </body>
 </html>
