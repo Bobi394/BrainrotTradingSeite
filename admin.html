@@ -10,21 +10,32 @@ h1{font-family:'Orbitron',sans-serif;font-size:3em;margin-top:20px;text-shadow:0
 .box{background:rgba(255,255,255,0.1);padding:20px;border-radius:20px;margin:20px auto;max-width:700px; text-align:center;box-shadow:0 0 40px rgba(0,198,255,0.3);}
 button{margin:5px;padding:10px 18px;border:none;border-radius:10px;background:linear-gradient(90deg,#00c6ff,#0072ff);color:white;font-weight:600;cursor:pointer;}
 button:hover{transform:scale(1.05);}
-.trade-list{margin-top:20px;text-align:left;background:rgba(255,255,255,0.05);padding:15px;border-radius:10px;max-height:500px;overflow-y:auto;}
+.trade-list{margin-top:20px;text-align:left;background:rgba(255,255,255,0.05);padding:15px;border-radius:10px;max-height:300px;overflow-y:auto;}
 .trade-item{border-bottom:1px solid rgba(255,255,255,0.2);padding:10px 0;}
 .trade-item:last-child{border:none;}
+#chatBox{margin-top:20px;text-align:left;background:rgba(255,255,255,0.1);padding:15px;border-radius:10px;max-height:300px;overflow-y:auto;}
+.message{padding:5px 10px;border-bottom:1px solid rgba(255,255,255,0.2);}
+input{padding:10px;border-radius:10px;border:none;width:70%;margin:5px 0;}
 </style>
 </head>
 <body>
 <h1>🧠 BrainRot Admin</h1>
+
 <div class="box">
-<h2>📩 Eingegangene Trade-Anfragen</h2>
+<h2>📩 Trade-Anfragen</h2>
 <div id="tradeList" class="trade-list">🔄 Lade Anfragen...</div>
+</div>
+
+<div class="box" id="chatSection" style="display:none;">
+<h2>💬 Chat mit User</h2>
+<div id="chatBox">🔄 Wähle zuerst eine angenommene Anfrage</div>
+<input type="text" id="chatInput" placeholder="Nachricht eingeben">
+<button id="sendChatBtn">Senden</button>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+import { getDatabase, ref, onValue, set, push } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
 const firebaseConfig = {
 apiKey:"AIzaSyC1kLr0wdCM1HDWj8x7LvMV2Q0K6kzycUY",
@@ -39,14 +50,23 @@ databaseURL:"https://brainrottradingseite-default-rtdb.europe-west1.firebasedata
 const app=initializeApp(firebaseConfig);
 const db=getDatabase(app);
 
-const tradeList=document.getElementById("tradeList");
-const tradesRef=ref(db,"trades");
+const tradeList = document.getElementById("tradeList");
+const chatSection = document.getElementById("chatSection");
+const chatBox = document.getElementById("chatBox");
+const chatInput = document.getElementById("chatInput");
+const sendChatBtn = document.getElementById("sendChatBtn");
 
+let activeChatRef = null;
+let lastSent = 0;
+const cooldown = 5000;
+
+// Trade-Anfragen anzeigen
+const tradesRef = ref(db,"trades");
 onValue(tradesRef, snapshot=>{
-  const trades=snapshot.val();
+  const trades = snapshot.val();
   tradeList.innerHTML="";
-  if(!trades){ tradeList.innerHTML="😴 Keine Anfragen"; return;}
-  
+  if(!trades){ tradeList.innerHTML="😴 Keine Anfragen"; return; }
+
   Object.entries(trades).forEach(([key,t])=>{
     const div=document.createElement("div");
     div.className="trade-item";
@@ -56,23 +76,57 @@ onValue(tradesRef, snapshot=>{
       <p>📨 Angebot: ${t.offer || "—"}</p>
       <p>✅ Status: ${t.accepted ? "Akzeptiert" : "Offen"}</p>
     `;
-    
+
     if(!t.accepted){
       const acceptBtn=document.createElement("button");
       acceptBtn.textContent="Annehmen";
       acceptBtn.onclick=()=>set(ref(db,"trades/"+key+"/accepted"),true);
       div.appendChild(acceptBtn);
     }
-    
+
     if(t.accepted){
       const chatBtn=document.createElement("button");
       chatBtn.textContent="Chat starten";
-      chatBtn.onclick=()=>window.open(`index.html`);
+      chatBtn.onclick=()=>{
+        activeChatRef = ref(db,"chats/"+t.userId);
+        chatSection.style.display="block";
+        loadChat();
+      };
       div.appendChild(chatBtn);
     }
-    
+
     tradeList.appendChild(div);
   });
+});
+
+// Chat laden
+function loadChat(){
+  if(!activeChatRef) return;
+  onValue(activeChatRef, snapshot=>{
+    const data = snapshot.val();
+    chatBox.innerHTML="";
+    if(!data) chatBox.innerHTML="💬 Noch keine Nachrichten";
+    else Object.values(data).sort((a,b)=>a.time-b.time).forEach(msg=>{
+      const div=document.createElement("div");
+      div.className="message";
+      div.textContent=`${msg.user}: ${msg.text}`;
+      chatBox.appendChild(div);
+    });
+    chatBox.scrollTop = chatBox.scrollHeight;
+  });
+}
+
+// Nachricht senden
+sendChatBtn.addEventListener("click", async()=>{
+  if(!activeChatRef){ alert("⚠️ Wähle zuerst eine angenommene Anfrage!"); return; }
+  const text = chatInput.value.trim();
+  if(!text) return;
+  const now = Date.now();
+  if(now - lastSent < cooldown) return alert("⚠️ Warte ein paar Sekunden!");
+  lastSent = now;
+  const newRef = push(activeChatRef);
+  await set(newRef,{user:"Admin", text, time:now});
+  chatInput.value="";
 });
 </script>
 </body>
