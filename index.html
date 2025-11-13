@@ -2,99 +2,132 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🧠 BrainRot Shop</title>
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600&family=Poppins:wght@400;600&display=swap');
+
   body {
-    font-family: 'Roboto', sans-serif;
-    background: linear-gradient(135deg, #36d1dc, #5b86e5);
+    font-family: 'Poppins', sans-serif;
+    background: radial-gradient(circle at top left, #000428, #004e92);
     color: #fff;
-    margin:0;
-    padding:0;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
   }
-  .container {
-    width: 90%;
-    max-width: 1000px;
-    margin: 50px auto;
-    text-align: center;
-  }
+
   h1 {
+    font-family: 'Orbitron', sans-serif;
     font-size: 3em;
-    margin-bottom: 30px;
-    text-shadow: 0 0 10px rgba(0,0,0,0.5);
+    margin-top: 40px;
+    text-shadow: 0 0 20px #00c6ff, 0 0 40px #0072ff;
   }
-  .brainrot-list {
+
+  .brainrot-container {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 20px;
+    margin: 40px 20px;
+    gap: 25px;
+    width: 90%;
+    max-width: 1200px;
   }
+
   .brainrot-card {
-    background: rgba(0,0,0,0.6);
+    background: rgba(255, 255, 255, 0.1);
     border-radius: 20px;
     padding: 20px;
-    width: 220px;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.5);
-    transition: transform 0.2s;
+    width: 240px;
+    box-shadow: 0 0 30px rgba(0, 198, 255, 0.2);
+    text-align: center;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
   }
+
   .brainrot-card:hover {
     transform: scale(1.05);
+    box-shadow: 0 0 40px rgba(0, 198, 255, 0.5);
   }
+
   .brainrot-card h3 {
-    font-size: 1.5em;
-    margin: 10px 0;
+    font-size: 1.6em;
+    margin-bottom: 10px;
+    color: #00c6ff;
+    text-shadow: 0 0 10px #00c6ff;
   }
-  .brainrot-card p {
-    margin: 5px 0;
+
+  .rarity {
+    font-weight: bold;
     font-size: 1.1em;
+  }
+
+  .income, .stock {
+    margin-top: 5px;
+    font-size: 1em;
+  }
+
+  footer {
+    margin-top: auto;
+    padding: 20px;
+    font-size: 1em;
+    color: #ccc;
   }
 </style>
 </head>
 <body>
-<div class="container">
   <h1>🧠 BrainRot Shop</h1>
-  <div class="brainrot-list" id="brainrotList">
-    <!-- Brainrots werden hier angezeigt -->
+  <div class="brainrot-container" id="brainrotContainer">
+    <p>🔄 Lade Brainrots...</p>
   </div>
-</div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+  <footer>© 2025 BrainRot Inc. – powered by Skippy 🦎</footer>
 
-const firebaseConfig = {
-  apiKey: "AIzaSyC1kLr0wdCM1HDWj8x7LvMV2Q0K6kzycUY",
-  authDomain: "brainrottradingseite.firebaseapp.com",
-  projectId: "brainrottradingseite",
-  storageBucket: "brainrottradingseite.firebasestorage.app",
-  messagingSenderId: "212738351089",
-  appId: "1:212738351089:web:9ae5b737cf550554d16e50",
-  measurementId: "G-BNZ0Y47M0K"
-};
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+    const firebaseConfig = {
+      apiKey: "AIzaSyC1kLr0wdCM1HDWj8x7LvMV2Q0K6kzycUY",
+      authDomain: "brainrottradingseite.firebaseapp.com",
+      projectId: "brainrottradingseite",
+      storageBucket: "brainrottradingseite.firebasestorage.app",
+      messagingSenderId: "212738351089",
+      appId: "1:212738351089:web:9ae5b737cf550554d16e50",
+      measurementId: "G-BNZ0Y47M0K",
+      databaseURL: "https://brainrottradingseite-default-rtdb.europe-west1.firebasedatabase.app/"
+    };
 
-const listContainer = document.getElementById("brainrotList");
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const container = document.getElementById("brainrotContainer");
 
-async function loadBrainrots() {
-  const snapshot = await getDocs(collection(db, "brainrots"));
-  listContainer.innerHTML = ""; // vorher leeren
-  snapshot.forEach(doc => {
-    const data = doc.data();
-    const card = document.createElement("div");
-    card.className = "brainrot-card";
-    card.innerHTML = `
-      <h3>${data.name}</h3>
-      <p>Seltenheit: ${data.rarity}</p>
-      <p>Geld/s: ${data.incomePerSecond}</p>
-      <p>Lager: ${data.stock}</p>
-    `;
-    listContainer.appendChild(card);
-  });
-}
+    // Live Brainrot-Daten anzeigen
+    const brainrotRef = ref(db, "brainrots");
+    onValue(brainrotRef, (snapshot) => {
+      const data = snapshot.val();
+      container.innerHTML = ""; // erst leeren
 
-// Laden direkt beim Start
-loadBrainrots();
-</script>
+      if (!data) {
+        container.innerHTML = "<p>😢 Noch keine Brainrots hinzugefügt...</p>";
+        return;
+      }
+
+      Object.keys(data).forEach((key) => {
+        const item = data[key];
+        const card = document.createElement("div");
+        card.className = "brainrot-card";
+        card.innerHTML = `
+          <h3>${item.name}</h3>
+          <p class="rarity">💎 ${item.rarity}</p>
+          <p class="income">💰 ${item.incomePerSecond} / Sekunde</p>
+          <p class="stock">📦 Auf Lager: ${item.stock}</p>
+        `;
+        container.appendChild(card);
+      });
+    });
+  </script>
 </body>
 </html>
