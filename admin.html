@@ -3,203 +3,75 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🧠 BrainRot Admin Login</title>
+<title>🧠 BrainRot Admin</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600&family=Poppins:wght@400;600&display=swap');
-
-  body {
-    font-family: 'Poppins', sans-serif;
-    background: radial-gradient(circle at top left, #000428, #004e92);
-    color: #fff;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-height: 100vh;
-  }
-
-  h1 {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 3em;
-    margin-top: 40px;
-    text-shadow: 0 0 20px #00c6ff, 0 0 40px #0072ff;
-  }
-
-  .box {
-    background: rgba(255, 255, 255, 0.1);
-    padding: 40px;
-    border-radius: 20px;
-    margin-top: 40px;
-    box-shadow: 0 0 40px rgba(0, 198, 255, 0.3);
-    backdrop-filter: blur(10px);
-    width: 90%;
-    max-width: 400px;
-    text-align: center;
-  }
-
-  input, select {
-    width: 80%;
-    padding: 12px;
-    margin: 10px 0;
-    border-radius: 10px;
-    border: none;
-    outline: none;
-    font-size: 1.1em;
-    background: rgba(255, 255, 255, 0.15);
-    color: #fff;
-    text-align: center;
-  }
-
-  input:focus {
-    background: rgba(255, 255, 255, 0.25);
-  }
-
-  select option {
-    color: black;
-  }
-
-  button {
-    margin-top: 15px;
-    padding: 12px 25px;
-    border: none;
-    border-radius: 10px;
-    background: linear-gradient(90deg, #00c6ff, #0072ff);
-    color: white;
-    font-size: 1.1em;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.3s ease;
-  }
-
-  button:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 20px #00c6ff;
-  }
-
-  #status {
-    margin-top: 15px;
-    font-size: 1.1em;
-    color: #0ff;
-    text-shadow: 0 0 10px #0ff;
-  }
-
-  #adminPanel {
-    display: none;
-  }
+body{font-family:'Poppins',sans-serif;background:radial-gradient(circle at top left,#000428,#004e92);color:white;margin:0;padding:20px;text-align:center;}
+h1{font-family:'Orbitron',sans-serif;font-size:3em;margin-top:20px;text-shadow:0 0 20px #00c6ff;}
+.box{background:rgba(255,255,255,0.1);padding:20px;border-radius:20px;margin:20px auto;max-width:700px; text-align:center;box-shadow:0 0 40px rgba(0,198,255,0.3);}
+input{padding:10px;border-radius:10px;border:none;width:70%;margin:5px 0;}
+button{margin-top:10px;padding:10px 18px;border:none;border-radius:10px;background:linear-gradient(90deg,#00c6ff,#0072ff);color:white;font-weight:600;cursor:pointer;}
+button:hover{transform:scale(1.05);}
+.trade-list{margin-top:20px;text-align:left;background:rgba(255,255,255,0.05);padding:15px;border-radius:10px;max-height:400px;overflow-y:auto;}
+.trade-item{border-bottom:1px solid rgba(255,255,255,0.2);padding:10px 0;}
+.trade-item:last-child{border:none;}
 </style>
 </head>
 <body>
-  <h1>🧠 BrainRot Admin</h1>
+<h1>🧠 BrainRot Admin</h1>
+<div class="box">
+<h2>📩 Eingegangene Trade-Anfragen</h2>
+<div id="tradeList" class="trade-list">🔄 Lade Anfragen...</div>
+</div>
 
-  <!-- LOGIN -->
-  <div class="box" id="loginBox">
-    <h2>🔐 Admin Login</h2>
-    <input type="email" id="email" placeholder="E-Mail"><br>
-    <input type="password" id="password" placeholder="Passwort"><br>
-    <button id="loginBtn">Anmelden</button>
-    <p id="status"></p>
-  </div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
-  <!-- ADMIN PANEL -->
-  <div class="box" id="adminPanel">
-    <h2>📦 Brainrot hinzufügen</h2>
-    <input type="text" id="brainrotName" placeholder="Name des Brainrots"><br>
-    <select id="brainrotRarity">
-      <option>Selten</option>
-      <option>Episch</option>
-      <option>Legendär</option>
-      <option>Mythisch</option>
-      <option>Brainrot Gott</option>
-      <option>Secret</option>
-      <option>OG</option>
-    </select><br>
-    <input type="number" id="brainrotIncome" placeholder="💰 Geld pro Sekunde"><br>
-    <input type="number" id="brainrotStock" placeholder="📦 Auf Lager"><br>
-    <button id="addBtn">➕ Brainrot hinzufügen</button>
-    <p id="addStatus"></p>
-  </div>
+const firebaseConfig = {
+apiKey:"AIzaSyC1kLr0wdCM1HDWj8x7LvMV2Q0K6kzycUY",
+authDomain:"brainrottradingseite.firebaseapp.com",
+projectId:"brainrottradingseite",
+storageBucket:"brainrottradingseite.firebasestorage.app",
+messagingSenderId:"212738351089",
+appId:"1:212738351089:web:9ae5b737cf550554d16e50",
+measurementId:"G-BNZ0Y47M0K",
+databaseURL:"https://brainrottradingseite-default-rtdb.europe-west1.firebasedatabase.app/"
+};
+const app=initializeApp(firebaseConfig);
+const db=getDatabase(app);
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import { getDatabase, ref, push, set } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+const tradeList=document.getElementById("tradeList");
+const tradesRef=ref(db,"trades");
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyC1kLr0wdCM1HDWj8x7LvMV2Q0K6kzycUY",
-      authDomain: "brainrottradingseite.firebaseapp.com",
-      projectId: "brainrottradingseite",
-      storageBucket: "brainrottradingseite.firebasestorage.app",
-      messagingSenderId: "212738351089",
-      appId: "1:212738351089:web:9ae5b737cf550554d16e50",
-      measurementId: "G-BNZ0Y47M0K",
-      databaseURL: "https://brainrottradingseite-default-rtdb.europe-west1.firebasedatabase.app/"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getDatabase(app);
-
-    const loginBox = document.getElementById("loginBox");
-    const adminPanel = document.getElementById("adminPanel");
-    const loginBtn = document.getElementById("loginBtn");
-    const status = document.getElementById("status");
-
-    // LOGIN
-    loginBtn.addEventListener("click", () => {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-
-      status.textContent = "⏳ Anmelden läuft...";
-
-      signInWithEmailAndPassword(auth, email, password)
-        .then(() => {
-          status.textContent = "✅ Erfolgreich angemeldet!";
-        })
-        .catch((err) => {
-          status.textContent = "❌ Fehler: " + err.message;
-        });
-    });
-
-    // WENN EINGELOGGT
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        loginBox.style.display = "none";
-        adminPanel.style.display = "block";
-      } else {
-        loginBox.style.display = "block";
-        adminPanel.style.display = "none";
-      }
-    });
-
-    // BRAINROT HINZUFÜGEN
-    const addBtn = document.getElementById("addBtn");
-    const addStatus = document.getElementById("addStatus");
-
-    addBtn.addEventListener("click", async () => {
-      const name = document.getElementById("brainrotName").value.trim();
-      const rarity = document.getElementById("brainrotRarity").value;
-      const income = parseFloat(document.getElementById("brainrotIncome").value);
-      const stock = parseInt(document.getElementById("brainrotStock").value);
-
-      if (!name || isNaN(income) || isNaN(stock)) {
-        return alert("⚠️ Bitte alle Felder ausfüllen!");
-      }
-
-      addStatus.textContent = "⏳ Hinzufügen läuft...";
-      try {
-        const newRef = push(ref(db, "brainrots"));
-        await set(newRef, {
-          name,
-          rarity,
-          incomePerSecond: income,
-          stock
-        });
-        addStatus.textContent = "✅ Brainrot erfolgreich hinzugefügt!";
-      } catch (err) {
-        addStatus.textContent = "❌ Fehler: " + err.message;
-      }
-    });
-  </script>
+onValue(tradesRef, snapshot=>{
+  const trades=snapshot.val();
+  tradeList.innerHTML="";
+  if(!trades){ tradeList.innerHTML="😴 Keine Anfragen"; return;}
+  Object.entries(trades).forEach(([key,t])=>{
+    const div=document.createElement("div");
+    div.className="trade-item";
+    div.innerHTML=`
+      <p>🧠 Brainrot: ${t.brainrotName}</p>
+      <p>💰 Einkommen: ${t.brainrotIncome}/Sek</p>
+      <p>📨 Angebot: ${t.offer}</p>
+      <p>👤 User-ID: ${t.userId}</p>
+      <p>✅ Status: ${t.accepted?'Akzeptiert':'Offen'}</p>
+    `;
+    if(!t.accepted){
+      const acceptBtn=document.createElement("button");
+      acceptBtn.textContent="Annehmen";
+      acceptBtn.onclick=()=>set(ref(db,"trades/"+key+"/accepted"),true);
+      div.appendChild(acceptBtn);
+    }
+    if(t.accepted){
+      const chatBtn=document.createElement("button");
+      chatBtn.textContent="Chat starten";
+      chatBtn.onclick=()=>window.open("index.html");
+      div.appendChild(chatBtn);
+    }
+    tradeList.appendChild(div);
+  });
+});
+</script>
 </body>
 </html>
