@@ -7,10 +7,10 @@
 <style>
 body{font-family:'Poppins',sans-serif;background:radial-gradient(circle at top left,#000428,#004e92);color:white;margin:0;padding:20px;text-align:center;}
 h1{font-family:'Orbitron',sans-serif;font-size:3em;margin-top:20px;text-shadow:0 0 20px #00c6ff;}
-.box{background:rgba(255,255,255,0.1);padding:20px;border-radius:20px;margin:20px auto;max-width:700px; text-align:center;box-shadow:0 0 40px rgba(0,198,255,0.3);}
+.box{background:rgba(255,255,255,0.1);padding:20px;border-radius:20px;margin:20px auto;max-width:900px;text-align:center;box-shadow:0 0 40px rgba(0,198,255,0.3);}
 button{margin:5px;padding:10px 18px;border:none;border-radius:10px;background:linear-gradient(90deg,#00c6ff,#0072ff);color:white;font-weight:600;cursor:pointer;}
 button:hover{transform:scale(1.05);}
-.trade-list{margin-top:20px;text-align:left;background:rgba(255,255,255,0.05);padding:15px;border-radius:10px;max-height:300px;overflow-y:auto;}
+.trade-list{margin-top:20px;text-align:left;background:rgba(255,255,255,0.05);padding:15px;border-radius:10px;max-height:400px;overflow-y:auto;}
 .trade-item{border-bottom:1px solid rgba(255,255,255,0.2);padding:10px 0;}
 .trade-item:last-child{border:none;}
 #chatBox{margin-top:20px;text-align:left;background:rgba(255,255,255,0.1);padding:15px;border-radius:10px;max-height:300px;overflow-y:auto;}
@@ -47,8 +47,8 @@ appId:"1:212738351089:web:9ae5b737cf550554d16e50",
 measurementId:"G-BNZ0Y47M0K",
 databaseURL:"https://brainrottradingseite-default-rtdb.europe-west1.firebasedatabase.app/"
 };
-const app=initializeApp(firebaseConfig);
-const db=getDatabase(app);
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
 const tradeList = document.getElementById("tradeList");
 const chatSection = document.getElementById("chatSection");
@@ -60,7 +60,7 @@ let activeChatRef = null;
 let lastSent = 0;
 const cooldown = 5000;
 
-// Trade-Anfragen anzeigen
+// ----------------- Trade-Anfragen anzeigen -----------------
 const tradesRef = ref(db,"trades");
 onValue(tradesRef, snapshot=>{
   const trades = snapshot.val();
@@ -68,27 +68,27 @@ onValue(tradesRef, snapshot=>{
   if(!trades){ tradeList.innerHTML="😴 Keine Anfragen"; return; }
 
   Object.entries(trades).forEach(([key,t])=>{
-    const div=document.createElement("div");
+    const div = document.createElement("div");
     div.className="trade-item";
     div.innerHTML=`
-      <p>🧠 Brainrot-ID: ${t.brainrotId || t.tradeId}</p>
-      <p>👤 Roblox-Name: ${t.robloxName}</p>
-      <p>📨 Angebot: ${t.offer || "—"}</p>
+      <p>🧠 Brainrot: ${t.brainrotName || "—"}</p>
+      <p>👤 ${t.robloxName}</p>
+      <p>📨 Angebot: ${t.offer}</p>
       <p>✅ Status: ${t.accepted ? "Akzeptiert" : "Offen"}</p>
     `;
 
     if(!t.accepted){
-      const acceptBtn=document.createElement("button");
+      const acceptBtn = document.createElement("button");
       acceptBtn.textContent="Annehmen";
       acceptBtn.onclick=()=>set(ref(db,"trades/"+key+"/accepted"),true);
       div.appendChild(acceptBtn);
     }
 
     if(t.accepted){
-      const chatBtn=document.createElement("button");
+      const chatBtn = document.createElement("button");
       chatBtn.textContent="Chat starten";
       chatBtn.onclick=()=>{
-        activeChatRef = ref(db,"chats/"+t.userId);
+        activeChatRef = ref(db,"chats/"+key);
         chatSection.style.display="block";
         loadChat();
       };
@@ -99,13 +99,13 @@ onValue(tradesRef, snapshot=>{
   });
 });
 
-// Chat laden
+// ----------------- Chat laden -----------------
 function loadChat(){
   if(!activeChatRef) return;
   onValue(activeChatRef, snapshot=>{
     const data = snapshot.val();
     chatBox.innerHTML="";
-    if(!data) chatBox.innerHTML="💬 Noch keine Nachrichten";
+    if(!data) chatBox.textContent="💬 Noch keine Nachrichten";
     else Object.values(data).sort((a,b)=>a.time-b.time).forEach(msg=>{
       const div=document.createElement("div");
       div.className="message";
@@ -116,7 +116,7 @@ function loadChat(){
   });
 }
 
-// Nachricht senden
+// ----------------- Nachricht senden -----------------
 sendChatBtn.addEventListener("click", async()=>{
   if(!activeChatRef){ alert("⚠️ Wähle zuerst eine angenommene Anfrage!"); return; }
   const text = chatInput.value.trim();
