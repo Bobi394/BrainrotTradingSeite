@@ -22,7 +22,7 @@ button:hover { transform:scale(1.05); }
 <div class="box">
 <h2>1️⃣ Trade-Anfrage senden</h2>
 <input type="text" id="robloxName" placeholder="Dein Roblox-Name"><br>
-<input type="text" id="offer" placeholder="Dein Angebot für den Brainrot"><br>
+<input type="text" id="offer" placeholder="Dein Angebot"><br>
 <button id="sendRequest">Anfrage senden</button>
 <p id="tradeIdDisplay"></p>
 <p id="requestStatus"></p>
@@ -83,7 +83,7 @@ sendRequestBtn.addEventListener("click", async()=>{
   const robloxName = robloxNameInput.value.trim();
   const offer = offerInput.value.trim();
   if(!robloxName || !offer){ alert("⚠️ Bitte alles ausfüllen!"); return; }
-  
+
   const tradeRef = push(ref(db,"trades"));
   await set(tradeRef,{
     userId,
@@ -92,7 +92,7 @@ sendRequestBtn.addEventListener("click", async()=>{
     accepted:false,
     time:Date.now()
   });
-  
+
   tradeIdDisplay.textContent = "🆔 Deine Trade-ID: " + tradeRef.key;
   requestStatus.textContent = "✅ Anfrage gesendet! Warte auf Admin-Freigabe.";
 });
@@ -102,19 +102,19 @@ loginChatBtn.addEventListener("click", ()=>{
   const enteredId = tradeIdInput.value.trim();
   if(!enteredId){ alert("⚠️ Bitte Trade-ID eingeben"); return; }
   const tradeRef = ref(db,"trades/"+enteredId);
-  
+
   onValue(tradeRef, snapshot=>{
     const trade = snapshot.val();
     if(!trade){ alert("⚠️ Trade-ID ungültig"); return; }
     if(trade.userId !== userId){ alert("⚠️ Diese Trade-ID gehört nicht dir"); return; }
     if(!trade.accepted){ chatBox.textContent = "⏳ Admin hat die Anfrage noch nicht angenommen."; chatActive=false; return; }
-    
+
     // Chat freischalten
     activeChatRef = ref(db,"chats/"+enteredId);
     chatBox.textContent = "";
     chatActive = true;
     chatInfo.textContent = "💬 Chat aktiviert!";
-    
+
     // Live-Chat anzeigen
     onValue(activeChatRef, snap=>{
       const messages = snap.val();
