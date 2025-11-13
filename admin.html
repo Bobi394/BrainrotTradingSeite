@@ -3,29 +3,51 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🧠 BrainRot Admin</title>
+<title>🧠 BrainRot Trading & Chat</title>
 <style>
-body{font-family:'Poppins',sans-serif;background:radial-gradient(circle at top left,#000428,#004e92);color:white;margin:0;padding:20px;text-align:center;}
-h1{font-family:'Orbitron',sans-serif;font-size:3em;margin-top:20px;text-shadow:0 0 20px #00c6ff;}
-.box{background:rgba(255,255,255,0.1);padding:20px;border-radius:20px;margin:20px auto;max-width:700px; text-align:center;box-shadow:0 0 40px rgba(0,198,255,0.3);}
-input{padding:10px;border-radius:10px;border:none;width:70%;margin:5px 0;}
-button{margin-top:10px;padding:10px 18px;border:none;border-radius:10px;background:linear-gradient(90deg,#00c6ff,#0072ff);color:white;font-weight:600;cursor:pointer;}
-button:hover{transform:scale(1.05);}
-.trade-list{margin-top:20px;text-align:left;background:rgba(255,255,255,0.05);padding:15px;border-radius:10px;max-height:400px;overflow-y:auto;}
-.trade-item{border-bottom:1px solid rgba(255,255,255,0.2);padding:10px 0;}
-.trade-item:last-child{border:none;}
+body { font-family:'Poppins',sans-serif; background: radial-gradient(circle at top left,#000428,#004e92); color:white; margin:0; padding:20px; text-align:center;}
+h1 { font-family:'Orbitron',sans-serif; font-size:3em; margin-top:20px; text-shadow:0 0 20px #00c6ff;}
+.box { background: rgba(255,255,255,0.1); padding:20px; border-radius:20px; margin:20px auto; max-width:700px; text-align:center; box-shadow:0 0 40px rgba(0,198,255,0.3);}
+input, select { padding:10px; border-radius:10px; border:none; width:70%; margin:5px 0;}
+button { margin-top:10px; padding:10px 18px; border:none; border-radius:10px; background:linear-gradient(90deg,#00c6ff,#0072ff); color:white; font-weight:600; cursor:pointer;}
+button:hover { transform:scale(1.05); }
+#messages { max-height:300px; overflow-y:auto; margin-bottom:10px; text-align:left; background:rgba(255,255,255,0.1); padding:10px; border-radius:10px; }
+.message { padding:5px 10px; border-bottom:1px solid rgba(255,255,255,0.2);}
+.brainrot-container { display:flex; flex-wrap:wrap; justify-content:center; margin:20px 0; gap:25px; width:90%; max-width:1200px; }
+.brainrot-card { background: rgba(255,255,255,0.1); border-radius:20px; padding:20px; width:240px; box-shadow:0 0 30px rgba(0,198,255,0.2); text-align:center; backdrop-filter:blur(10px); transition:all 0.3s ease; }
+.brainrot-card:hover { transform:scale(1.05); box-shadow:0 0 40px rgba(0,198,255,0.5); }
 </style>
 </head>
 <body>
-<h1>🧠 BrainRot Admin</h1>
+<h1>🧠 BrainRot Trading & Chat</h1>
+
+<!-- Trading -->
 <div class="box">
-<h2>📩 Eingegangene Trade-Anfragen</h2>
-<div id="tradeList" class="trade-list">🔄 Lade Anfragen...</div>
+<h2>🧠 Brainrots zum Traden</h2>
+<div class="brainrot-container" id="brainrotContainer"><p>🔄 Lade Brainrots...</p></div>
+</div>
+
+<!-- Trade-Anfrage -->
+<div class="box">
+<h2>1️⃣ Roblox-Name & Brainrot auswählen</h2>
+<input type="text" id="robloxName" placeholder="Dein Roblox-Name"><br>
+<input type="text" id="brainrotId" placeholder="Brainrot-ID"><br>
+<button id="sendRequest">Trade-Anfrage senden</button>
+<p id="requestStatus"></p>
+</div>
+
+<!-- Chat -->
+<div class="box">
+<h2>💬 Chat</h2>
+<div id="messages">Chat nur aktiv, wenn Admin die Anfrage angenommen hat.</div>
+<input type="text" id="msgInput" placeholder="Deine Nachricht">
+<button id="sendBtn">Senden</button>
+<p id="chatInfo"></p>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+import { getDatabase, ref, push, onValue, set } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
 const firebaseConfig = {
 apiKey:"AIzaSyC1kLr0wdCM1HDWj8x7LvMV2Q0K6kzycUY",
@@ -40,37 +62,125 @@ databaseURL:"https://brainrottradingseite-default-rtdb.europe-west1.firebasedata
 const app=initializeApp(firebaseConfig);
 const db=getDatabase(app);
 
-const tradeList=document.getElementById("tradeList");
-const tradesRef=ref(db,"trades");
+// User-ID speichern
+let userId = localStorage.getItem("userId");
+if(!userId){ userId="user-"+Math.floor(Math.random()*100000); localStorage.setItem("userId",userId); }
 
-onValue(tradesRef, snapshot=>{
-  const trades=snapshot.val();
-  tradeList.innerHTML="";
-  if(!trades){ tradeList.innerHTML="😴 Keine Anfragen"; return;}
-  Object.entries(trades).forEach(([key,t])=>{
-    const div=document.createElement("div");
-    div.className="trade-item";
-    div.innerHTML=`
-      <p>🧠 Brainrot: ${t.brainrotName}</p>
-      <p>💰 Einkommen: ${t.brainrotIncome}/Sek</p>
-      <p>📨 Angebot: ${t.offer}</p>
-      <p>👤 User-ID: ${t.userId}</p>
-      <p>✅ Status: ${t.accepted?'Akzeptiert':'Offen'}</p>
-    `;
-    if(!t.accepted){
-      const acceptBtn=document.createElement("button");
-      acceptBtn.textContent="Annehmen";
-      acceptBtn.onclick=()=>set(ref(db,"trades/"+key+"/accepted"),true);
-      div.appendChild(acceptBtn);
-    }
-    if(t.accepted){
-      const chatBtn=document.createElement("button");
-      chatBtn.textContent="Chat starten";
-      chatBtn.onclick=()=>window.open("index.html");
-      div.appendChild(chatBtn);
-    }
-    tradeList.appendChild(div);
+const brainrotContainer = document.getElementById("brainrotContainer");
+const robloxNameInput = document.getElementById("robloxName");
+const brainrotIdInput = document.getElementById("brainrotId");
+const sendRequestBtn = document.getElementById("sendRequest");
+const requestStatus = document.getElementById("requestStatus");
+const chatDiv = document.getElementById("messages");
+const msgInput = document.getElementById("msgInput");
+const sendBtn = document.getElementById("sendBtn");
+const chatInfo = document.getElementById("chatInfo");
+
+let chatRef = ref(db,"chats/"+userId);
+let chatActive = false;
+
+// ----------------- Brainrots anzeigen -----------------
+const brainrotRef = ref(db,"brainrots");
+onValue(brainrotRef, snapshot=>{
+  const data = snapshot.val();
+  brainrotContainer.innerHTML="";
+  if(!data) brainrotContainer.innerHTML="<p>😢 Noch keine Brainrots verfügbar</p>";
+  else {
+    Object.keys(data).forEach(key=>{
+      const item = data[key];
+      const card = document.createElement("div");
+      card.className="brainrot-card";
+      card.innerHTML=`
+        <h3>${item.name}</h3>
+        <p>💎 ${item.rarity}</p>
+        <p>💰 ${item.incomePerSecond} / Sekunde</p>
+        <p>📦 Auf Lager: ${item.stock}</p>
+        <button onclick="startTrade('${key}','${item.name}','${item.incomePerSecond}')">🔁 Trade anbieten</button>
+      `;
+      brainrotContainer.appendChild(card);
+    });
+  }
+});
+
+window.startTrade = (id,name,income)=>{
+  const offer = prompt(`Was willst du für "${name}" geben?`);
+  if(!offer) return;
+  const tradeRef = push(ref(db,"trades"));
+  set(tradeRef,{
+    tradeId:id,
+    brainrotName:name,
+    brainrotIncome:income,
+    offer,
+    userId,
+    robloxName: robloxNameInput.value || "Unbekannt",
+    accepted:false,
+    time:Date.now()
   });
+  alert("✅ Trade-Angebot gesendet!");
+};
+
+// ----------------- Trade-Anfrage senden -----------------
+sendRequestBtn.addEventListener("click", async()=>{
+  const robloxName = robloxNameInput.value.trim();
+  const brainrotId = brainrotIdInput.value.trim();
+  if(!robloxName || !brainrotId){ alert("⚠️ Bitte alles ausfüllen!"); return; }
+  const tradeRef = push(ref(db,"trades"));
+  await set(tradeRef,{
+    userId,
+    robloxName,
+    brainrotId,
+    accepted:false,
+    time:Date.now()
+  });
+  requestStatus.textContent="✅ Anfrage gesendet! Warte auf Admin-Freigabe.";
+});
+
+// ----------------- Chat nur nach Annahme -----------------
+onValue(ref(db,"trades"), snapshot=>{
+  const trades = snapshot.val();
+  let accepted=false;
+  if(trades){
+    Object.values(trades).forEach(t=>{
+      if(t.userId===userId && t.accepted) accepted=true;
+    });
+  }
+  if(accepted && !chatActive){
+    chatActive=true;
+    chatInfo.textContent="💬 Chat aktiviert!";
+    chatDiv.innerHTML="";
+    chatRef=ref(db,"chats/"+userId);
+  } else if(!accepted){
+    chatActive=false;
+    chatInfo.textContent="💬 Chat nur aktiv, wenn Admin die Anfrage angenommen hat.";
+  }
+});
+
+// ----------------- Live Chat -----------------
+onValue(chatRef, snapshot=>{
+  const data = snapshot.val();
+  chatDiv.innerHTML="";
+  if(!data) chatDiv.innerHTML="💬 Noch keine Nachrichten";
+  else Object.values(data).sort((a,b)=>a.time-b.time).forEach(msg=>{
+    const div=document.createElement("div");
+    div.className="message";
+    div.textContent=`${msg.user}: ${msg.text}`;
+    chatDiv.appendChild(div);
+  });
+  chatDiv.scrollTop=chatDiv.scrollHeight;
+});
+
+// ----------------- Anti-Spam -----------------
+let lastSent=0; const cooldown=5000;
+sendBtn.addEventListener("click", async()=>{
+  if(!chatActive){ alert("⚠️ Chat noch nicht freigeschaltet!"); return; }
+  const text = msgInput.value.trim();
+  if(!text) return;
+  const now = Date.now();
+  if(now-lastSent<cooldown) return alert("⚠️ Warte ein paar Sekunden bevor du erneut sendest!");
+  lastSent = now;
+  const newRef = push(chatRef);
+  await set(newRef,{user:"User", text, time:now});
+  msgInput.value="";
 });
 </script>
 </body>
