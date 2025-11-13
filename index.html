@@ -7,25 +7,29 @@
 <style>
 body { font-family:'Poppins',sans-serif; background: radial-gradient(circle at top left,#000428,#004e92); color:white; margin:0; padding:20px; text-align:center;}
 h1 { font-family:'Orbitron',sans-serif; font-size:3em; margin-top:20px; text-shadow:0 0 20px #00c6ff;}
-.box { background: rgba(255,255,255,0.1); padding:20px; border-radius:20px; margin:20px auto; max-width:700px; text-align:center; box-shadow:0 0 40px rgba(0,198,255,0.3);}
-input { padding:10px; border-radius:10px; border:none; width:70%; margin:5px 0;}
+.box { background: rgba(255,255,255,0.1); padding:20px; border-radius:20px; margin:20px auto; max-width:900px; text-align:center; box-shadow:0 0 40px rgba(0,198,255,0.3);}
+input, select { padding:10px; border-radius:10px; border:none; width:70%; margin:5px 0;}
 button { margin-top:10px; padding:10px 18px; border:none; border-radius:10px; background:linear-gradient(90deg,#00c6ff,#0072ff); color:white; font-weight:600; cursor:pointer;}
 button:hover { transform:scale(1.05); }
+.brainrot-container { display:flex; flex-wrap:wrap; justify-content:center; gap:20px; }
+.brainrot-card { background: rgba(255,255,255,0.1); border-radius:20px; padding:15px; width:220px; text-align:center; box-shadow:0 0 30px rgba(0,198,255,0.2);}
 #chatBox { max-height:300px; overflow-y:auto; margin-bottom:10px; text-align:left; background:rgba(255,255,255,0.1); padding:10px; border-radius:10px;}
 .message { padding:5px 10px; border-bottom:1px solid rgba(255,255,255,0.2);}
 </style>
 </head>
 <body>
-<h1>🧠 BrainRot Trading & Chat</h1>
+<h1>🧠 BrainRot Trading</h1>
 
-<!-- Trade-Anfrage -->
+<!-- Brainrots anzeigen -->
 <div class="box">
-<h2>1️⃣ Trade-Anfrage senden</h2>
-<input type="text" id="robloxName" placeholder="Dein Roblox-Name"><br>
-<input type="text" id="offer" placeholder="Dein Angebot"><br>
-<button id="sendRequest">Anfrage senden</button>
-<p id="tradeIdDisplay"></p>
-<p id="requestStatus"></p>
+<h2>🧠 Verfügbare Brainrots</h2>
+<div class="brainrot-container" id="brainrotContainer"><p>🔄 Lade Brainrots...</p></div>
+</div>
+
+<!-- Trade-ID Anzeige -->
+<div class="box">
+<h2>📨 Trade-ID</h2>
+<p id="tradeIdDisplay">Noch keine Anfrage gesendet</p>
 </div>
 
 <!-- Chat -->
@@ -60,12 +64,8 @@ const db = getDatabase(app);
 let userId = localStorage.getItem("userId");
 if(!userId){ userId="user-"+Math.floor(Math.random()*100000); localStorage.setItem("userId",userId); }
 
-const robloxNameInput = document.getElementById("robloxName");
-const offerInput = document.getElementById("offer");
-const sendRequestBtn = document.getElementById("sendRequest");
+const brainrotContainer = document.getElementById("brainrotContainer");
 const tradeIdDisplay = document.getElementById("tradeIdDisplay");
-const requestStatus = document.getElementById("requestStatus");
-
 const tradeIdInput = document.getElementById("tradeIdInput");
 const loginChatBtn = document.getElementById("loginChatBtn");
 const chatBox = document.getElementById("chatBox");
@@ -78,23 +78,48 @@ let chatActive = false;
 let lastSent = 0;
 const cooldown = 5000;
 
-// ----------------- Trade-Anfrage senden -----------------
-sendRequestBtn.addEventListener("click", async()=>{
-  const robloxName = robloxNameInput.value.trim();
-  const offer = offerInput.value.trim();
-  if(!robloxName || !offer){ alert("⚠️ Bitte alles ausfüllen!"); return; }
+// ----------------- Brainrots laden -----------------
+const brainrotRef = ref(db,"brainrots");
+onValue(brainrotRef, snapshot=>{
+  const data = snapshot.val();
+  brainrotContainer.innerHTML="";
+  if(!data) brainrotContainer.innerHTML="<p>😢 Keine Brainrots verfügbar</p>";
+  else {
+    Object.entries(data).forEach(([key, item])=>{
+      const card = document.createElement("div");
+      card.className = "brainrot-card";
+      card.innerHTML = `
+        <h3>${item.name}</h3>
+        <p>💎 ${item.rarity}</p>
+        <p>💰 ${item.incomePerSecond} / Sekunde</p>
+        <p>📦 Lager: ${item.stock}</p>
+        <button id="tradeBtn-${key}">Traden</button>
+      `;
+      brainrotContainer.appendChild(card);
 
-  const tradeRef = push(ref(db,"trades"));
-  await set(tradeRef,{
-    userId,
-    robloxName,
-    offer,
-    accepted:false,
-    time:Date.now()
-  });
+      // Button Event
+      document.getElementById(`tradeBtn-${key}`).addEventListener("click", ()=>{
+        const robloxName = prompt("Dein Roblox-Name:");
+        if(!robloxName) return alert("⚠️ Bitte Roblox-Name eingeben!");
+        const offer = prompt("Was willst du für den Brainrot geben?");
+        if(!offer) return alert("⚠️ Bitte Angebot eingeben!");
 
-  tradeIdDisplay.textContent = "🆔 Deine Trade-ID: " + tradeRef.key;
-  requestStatus.textContent = "✅ Anfrage gesendet! Warte auf Admin-Freigabe.";
+        // Trade in Firebase speichern
+        const tradeRef = push(ref(db,"trades"));
+        set(tradeRef,{
+          userId,
+          robloxName,
+          offer,
+          brainrotId: key,
+          brainrotName: item.name,
+          accepted:false,
+          time:Date.now()
+        });
+        tradeIdDisplay.textContent = "🆔 Deine Trade-ID: " + tradeRef.key;
+        alert("✅ Trade-Anfrage gesendet! Warte auf Admin-Freigabe.");
+      });
+    });
+  }
 });
 
 // ----------------- Chat-Login -----------------
@@ -109,13 +134,12 @@ loginChatBtn.addEventListener("click", ()=>{
     if(trade.userId !== userId){ alert("⚠️ Diese Trade-ID gehört nicht dir"); return; }
     if(!trade.accepted){ chatBox.textContent = "⏳ Admin hat die Anfrage noch nicht angenommen."; chatActive=false; return; }
 
-    // Chat freischalten
     activeChatRef = ref(db,"chats/"+enteredId);
     chatBox.textContent = "";
     chatActive = true;
     chatInfo.textContent = "💬 Chat aktiviert!";
 
-    // Live-Chat anzeigen
+    // Live-Chat
     onValue(activeChatRef, snap=>{
       const messages = snap.val();
       chatBox.innerHTML="";
@@ -131,7 +155,7 @@ loginChatBtn.addEventListener("click", ()=>{
   }, {onlyOnce:false});
 });
 
-// ----------------- Nachricht senden -----------------
+// ----------------- Chat senden -----------------
 sendChatBtn.addEventListener("click", async()=>{
   if(!chatActive){ alert("⚠️ Chat noch nicht freigeschaltet!"); return; }
   const text = chatInput.value.trim();
